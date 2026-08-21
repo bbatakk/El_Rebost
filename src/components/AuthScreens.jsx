@@ -321,7 +321,7 @@ function DeleteAccountAction({ onDeleteAccount }) {
   )
 }
 
-export function RebostMenu({ rebosts, currentId, userUid, onSwitch, onDelete, onRename, onLogout, onClose, onCreate, onJoin, onDeleteAccount }) {
+export function RebostMenu({ rebosts, currentId, userUid, onSwitch, onDelete, onRename, onLogout, onClose, onCreate, onJoin, onDeleteAccount, onShowTutorial }) {
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
@@ -546,6 +546,11 @@ export function RebostMenu({ rebosts, currentId, userUid, onSwitch, onDelete, on
           {renameError && <p className="auth-error">{renameError}</p>}
         </div>
 
+        {onShowTutorial && (
+          <button className="menu-link-btn" onClick={onShowTutorial}>
+            Torna a veure el tutorial
+          </button>
+        )}
         <button className="logout-btn" onClick={onLogout}>
           Tanca la sessió
         </button>

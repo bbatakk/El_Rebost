@@ -1188,6 +1188,21 @@ html, body {
 }
 .logout-btn:hover { color: var(--danger); }
 
+.menu-link-btn {
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 10px;
+  text-decoration: underline;
+}
+.menu-link-btn:hover { color: var(--green-dark); }
+
 .version-tag {
   margin-top: 18px;
   text-align: center;
@@ -1776,6 +1791,22 @@ html, body {
   box-shadow: var(--shadow-md);
   animation: pop-in 0.18s ease;
 }
+.onboarding-progress {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  opacity: 0.7;
+  margin-bottom: 16px;
+}
+.onboarding-step { animation: onboarding-in 0.22s ease; }
+.onboarding-step.enter-right { --onboarding-from: 28px; }
+.onboarding-step.enter-left { --onboarding-from: -28px; }
+@keyframes onboarding-in {
+  from { opacity: 0; transform: translateX(var(--onboarding-from, 28px)); }
+  to { opacity: 1; transform: translateX(0); }
+}
 .onboarding-emoji { font-size: 3rem; line-height: 1; margin-bottom: 10px; }
 .onboarding-title {
   margin: 0 0 10px;
@@ -1790,12 +1821,36 @@ html, body {
   font-size: 0.95rem;
   line-height: 1.5;
 }
+.onboarding-points {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+.onboarding-points li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-variant);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  color: var(--on-surface);
+}
+.onboarding-point-icon { flex: none; font-size: 1rem; }
 .onboarding-dots { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
 .onboarding-dot {
   width: 8px;
   height: 8px;
+  padding: 0;
+  border: none;
   border-radius: 50%;
   background: var(--outline);
+  cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 }
 .onboarding-dot.active { background: var(--green); transform: scale(1.3); }

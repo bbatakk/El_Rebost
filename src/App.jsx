@@ -166,6 +166,10 @@ export default function App() {
           onRename={handleRename}
           onLogout={() => logout()}
           onDeleteAccount={() => deleteAccount(user.uid)}
+          onShowTutorial={() => {
+            setMenuOpen(false)
+            setShowOnboarding(true)
+          }}
           onClose={() => setMenuOpen(false)}
         />
       )}
