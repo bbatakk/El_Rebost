@@ -5,12 +5,33 @@ Versió web d'El Rebost que comparteix l'estoc, la llista de la compra i els pla
 **En línia**: https://casaestoc.web.app (projecte Firebase `casaestoc`)
 
 - **Frontend**: Vite + React (JavaScript, els mateixos plats i lògica que l'app Android).
-- **Base de dades**: Firebase (auth anònim + un sol document `casa/shared` en Cloud Firestore).
+- **Base de dades**: Cloud Firestore amb sincronització en temps real — múltiples **rebosts** compartits.
+- **Autenticació**: Google Sign-In; cada persona té el seu compte i s'uneix als rebosts amb un codi.
+- **Backend**: Cloud Functions (Node.js 22) amb Google Cloud Vision per a l'OCR de tiquets i el reconeixement d'aliments per foto.
 - **PWA**: instal·lable al mòbil i desplegable al núvol gratuït de Firebase Hosting.
 
 ## Com funciona
 
-Tothom que obre la web veu i edita les **mateixes dades** (un únic document compartit). No cal registrar-se: l'usuari entra de manera anònima automàticament. Amb les regles següents, només els documents del mateix projecte Firestore s'hi poden connectar (no hi ha autenticació per persona).
+- Cada usuari entra amb el seu **compte de Google** (`AuthScreens.jsx`).
+- En crear un rebost es genera un **codi de 6 caràcters** (col·lecció `rebostCodes`). Qui tingui el codi pot unir-s'hi com a membre (per codi o QR).
+- Cada rebost és un document a Firestore (`rebosts/{id}`) amb `items`, `recipes` i `mealPlan`. Tots els membres veuen i editen les **mateixes dades en temps real** (`onSnapshot`).
+- Les regles (`firestore.rules`) restringeixen l'accés: només l'amo o els membres poden llegir/escriure, i un membre no pot canviar el nom, l'amo ni el codi del rebost.
+- Es pot esborrar el compte (reautenticació amb Google): elimina els rebosts propis i treu l'usuari dels que només és membre.
+
+### Pestanyes
+
+| Pestanya | Què hi trobes |
+|---|---|
+| **Estoc** | Productes a casa, quantitats i caducitats estimades |
+| **Aliments** | Catàleg d'aliments amb categories i vida útil |
+| **Cuina** | Plats que pots fer amb el que tens (i gairebé), receptes i cuinar (descompta ingredients, timers) |
+| **Compra** | Llista de la compra compartida |
+
+### Entrada ràpida de productes
+
+- **Codi de barres**: escaneig amb la càmera i cerca automàtica a Open Food Facts (`src/off.js`).
+- **Foto del tiquet**: OCR amb Cloud Vision (funció `scanReceipt`) i pantalla de revisió abans de desar (`ReceiptReviewModal`).
+- **Foto de l'aliment**: reconeixement per etiquetes i text (funció `identifyFood`, `FoodIdentifyModal`).
 
 ## Posada en marxa local
 
@@ -21,46 +42,40 @@ npm install
 npm run dev
 ```
 
-Obre `http://localhost:5173`. Per al build de producció: `npm run build` (deixa el resultat a `dist/`). Tests de la lògica (sense navegador): `npm test`.
+Obre `http://localhost:5173`. Per al build de producció: `npm run build` (deixa el resultat a `dist/`).
+
+Tests de la lògica (sense navegador):
+
+```
+npm test
+```
 
 ## Configurar Firebase (una sola vegada)
 
+> Ja fet per al projecte `casaestoc`; això és només per recrear l'entorn des de zero.
+
 1. Vés a <https://console.firebase.google.com> i crea un projecte (gratuït).
-2. Al projecte, activa **Authentication → Sign-in method → Anonymous**.
-3. Activa **Firestore Database** (mode de producció). Anota l'**ID del projecte** (el que apareix a `firebaseconfig`).
-4. A **Project settings → General**, copia la configuració de l'app web (Firebase SDK snippet) i enganxa els valors a `src/firebase.js` (substitueix els valors `API_KEY_AQUI`, `TU_PROJECTE`, etc.).
-
-   > Ja fet: `src/firebase.js` conté la configuració del projecte `casaestoc`.
-
-   ```js
-   const firebaseConfig = {
-     apiKey: '...',
-     authDomain: '...',
-     projectId: '...',
-     storageBucket: '...',
-     messagingSenderId: '...',
-     appId: '...'
-   }
-   ```
-
-5. **Regles de Firestore** (important: la lectura i escriptura són anònimes, així que restringeix el document):
-
-   A la pestanya **Rules**:
+2. Activa **Authentication → Sign-in method → Google** (i afegeix el domini de localhost/hosting als dominis autoritzats).
+3. Activa **Firestore Database** (mode de producció).
+4. A **Project settings → General**, copia la configuració de l'app web i enganxa-la a `src/firebase.js`.
+5. Regles i índexs de Firestore:
 
    ```
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       match /casa/shared {
-         allow read, write: if true;
-       }
-     }
-   }
+   firebase deploy --only firestore:rules,firestore:indexes
    ```
 
-   > Nota: si vols que només els del teu entorn hi accedeixin, el més segur és limitar-ho per la URL del teu hosting, però l'opció anterior és la més senzilla per a ús domèstic.
+   (els fitxers font són `firestore.rules` i `firestore.indexes.json`)
+6. Cloud Functions (OCR de tiquets i reconeixement d'aliments):
 
-6. Comprova que tot funciona: `npm run dev`, afegeix un aliment, tanca i torna a obrir — les dades hi continuen perquè es desen al núvol.
+   ```
+   cd functions
+   npm install
+   cd ..
+   firebase deploy --only functions
+   ```
+
+   > Nota: les funcions fan servir la **Cloud Vision API**, que requereix tenir-la activada al projecte GCP i un pla de facturació (Blaze), tot i que té una quota gratuïta mensual.
+7. Comprova que tot funciona: `npm run dev`, entra amb Google, crea un rebost i afegeix un aliment.
 
 ## Desplegar al núvol (Firebase Hosting, gratuït)
 
@@ -71,17 +86,43 @@ npm run build
 firebase deploy --only hosting
 ```
 
+Si has canviat les funcions o les regles:
+
+```
+firebase deploy --only functions
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
 Eines utilitzades (una sola vegada, ja fet):
 - `npm install -g firebase-tools` (amb el Node portàtil).
 - `firebase login` (accés amb compte Google; guardat a `~/.config/firebase`).
-- `firebase.json` (carpeta pública `dist`) i `.firebaserc` (projecte `casaestoc`) ja creats.
+- `firebase.json` (hosting des de `dist`, funcions a `functions/`) i `.firebaserc` (projecte `casaestoc`) ja creats.
 
 Per instal·lar-la al mòbil: obre **https://casaestoc.web.app** i, des del menú del navegador, **Afegeix a la pantalla d'inici**.
 
 ## Estructura
 
-- `src/firebase.js` — connexió Firebase + sincronització del document compartit.
+- `src/firebase.js` — connexió Firebase, auth Google, gestió de rebosts (crear/unir/esborrar) i subscripcions en temps real.
+- `src/App.jsx` — pestanyes Estoc / Aliments / Cuina / Compra i operacions principals.
 - `src/data.js`, `src/shelflife.js` — categories, estimació de caducitat, escalat de quantitats (portats de `ShelfLife.kt`).
 - `src/dishes.js` — catàleg de plats i coincidència d'ingredients (portat de `Dishes.kt`).
-- `src/App.jsx` — pestanyes Estoc / Cuina / Compra i operacions.
-- `src/components/ItemModal.jsx`, `DishModal.jsx` — diàlegs d'alta/edició i recepta.
+- `src/foods.js` — catàleg d'aliments coneguts.
+- `src/prices.js` — historial i estimació de preus.
+- `src/off.js` — cerca de productes a Open Food Facts per codi de barres.
+- `src/sw.js` — service worker de la PWA.
+- `src/components/` — diàlegs i peces d'UI:
+  - `AuthScreens.jsx` — entrada amb Google, creació/unions a rebosts, esborrat de compte.
+  - `ItemModal.jsx`, `DishModal.jsx`, `RecipeModal.jsx`, `CookModal.jsx` — alta/edició d'aliments, plats i cuinat.
+  - `ReceiptReviewModal.jsx`, `FoodIdentifyModal.jsx` — revisió de tiquets escanejats i identificació per foto.
+  - `BarcodeScanner.jsx`, `QrScanner.jsx`, `QrModal.jsx` — escaneig de codis de barres i QR.
+  - `TimerBar.jsx`, `TimerModal.jsx` — temporitzadors de cuina.
+  - `Onboarding.jsx`, `Logo.jsx`.
+- `functions/index.js` — Cloud Functions `scanReceipt` i `identifyFood` (Google Cloud Vision).
+- `tests/logic.test.mjs` — tests de la lògica sense navegador (`npm test`).
+
+## Scripts de manteniment
+
+- `scripts/seed.mjs` — poblar Firestore amb dades de prova.
+- `scripts/dedupe.mjs` — detecta i fusiona aliments duplicats (singular/plural); dry-run per defecte, `--apply` per aplicar.
+- `scripts/check-dishes.mjs` — calcula quants ingredients de cada plat hi ha disponibles. *(Nota: encara llegeix l'antic document únic `casa/shared`, pendent de migrar al model multi-rebost.)*
+- `scripts/backup-*.json` — còpies de seguretat de dades.
