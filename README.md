@@ -103,20 +103,29 @@ Per instal·lar-la al mòbil: obre **https://casaestoc.web.app** i, des del men�
 ## Estructura
 
 - `src/firebase.js` — connexió Firebase, auth Google, gestió de rebosts (crear/unir/esborrar) i subscripcions en temps real.
-- `src/App.jsx` — pestanyes Estoc / Aliments / Cuina / Compra i operacions principals.
+- `src/App.jsx` — arrel de l'app: sessió de Google, selecció del rebost actiu i el seu menú.
+- `src/MainApp.jsx` — pestanyes Estoc / Aliments / Cuina / Compra, capçalera, modals i toast.
 - `src/data.js`, `src/shelflife.js` — categories, estimació de caducitat, escalat de quantitats (portats de `ShelfLife.kt`).
 - `src/dishes.js` — catàleg de plats i coincidència d'ingredients (portat de `Dishes.kt`).
 - `src/foods.js` — catàleg d'aliments coneguts.
 - `src/prices.js` — historial i estimació de preus.
 - `src/off.js` — cerca de productes a Open Food Facts per codi de barres.
 - `src/sw.js` — service worker de la PWA.
+- `src/lib/` — utilitats compartides:
+  - `appUtils.js` — constants de pestanyes, routing per hash, `newId`, `zeroItem`, hook `useCollapsed`.
+  - `timer.js` — àudio/notificacions del temporitzador i hook `useTimer`.
+- `src/hooks/` — lògica reutilitzable:
+  - `useToast.js` — notificacions emergents amb acció (Desfer).
+  - `useRebostActions.js` — totes les mutacions de dades del rebost actiu (aliments, receptes, pla de menú).
+  - `useScans.js` — fluxos d'escaneig de tiquets i identificació per foto.
 - `src/components/` — diàlegs i peces d'UI:
   - `AuthScreens.jsx` — entrada amb Google, creació/unions a rebosts, esborrat de compte.
   - `ItemModal.jsx`, `DishModal.jsx`, `RecipeModal.jsx`, `CookModal.jsx` — alta/edició d'aliments, plats i cuinat.
   - `ReceiptReviewModal.jsx`, `FoodIdentifyModal.jsx` — revisió de tiquets escanejats i identificació per foto.
   - `BarcodeScanner.jsx`, `QrScanner.jsx`, `QrModal.jsx` — escaneig de codis de barres i QR.
   - `TimerBar.jsx`, `TimerModal.jsx` — temporitzadors de cuina.
-  - `Onboarding.jsx`, `Logo.jsx`.
+  - `ConfirmDialog.jsx`, `ItemMenu.jsx`.
+  - `tabs/` — una pestanya per fitxer: `StockTab`, `FoodsTab`, `KitchenTab`, `ShoppingTab`, `MenuTab` (+ helpers a `common.jsx`).
 - `functions/index.js` — Cloud Functions `scanReceipt` i `identifyFood` (Google Cloud Vision).
 - `tests/logic.test.mjs` — tests de la lògica sense navegador (`npm test`).
 
@@ -124,5 +133,5 @@ Per instal·lar-la al mòbil: obre **https://casaestoc.web.app** i, des del men�
 
 - `scripts/seed.mjs` — poblar Firestore amb dades de prova.
 - `scripts/dedupe.mjs` — detecta i fusiona aliments duplicats (singular/plural); dry-run per defecte, `--apply` per aplicar.
-- `scripts/check-dishes.mjs` — calcula quants ingredients de cada plat hi ha disponibles. *(Nota: encara llegeix l'antic document únic `casa/shared`, pendent de migrar al model multi-rebost.)*
+- `scripts/check-dishes.mjs` — calcula quants ingredients de cada plat hi ha disponibles al rebost indicat: `node scripts/check-dishes.mjs <CODI>`. Entra amb un compte anònim temporal que s'esborra sol en acabar (no deixa rastre als membres del rebost).
 - `scripts/backup-*.json` — còpies de seguretat de dades.

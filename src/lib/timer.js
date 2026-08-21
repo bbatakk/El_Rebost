@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 let audioCtx = null
-function ensureAudio() {
+export function ensureAudio() {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext
     if (!audioCtx) audioCtx = new Ctx()
@@ -10,7 +10,7 @@ function ensureAudio() {
   } catch (e) { return null }
 }
 
-function alarm() {
+export function alarm() {
   const ctx = ensureAudio()
   if (!ctx) return
   try {
@@ -44,7 +44,7 @@ function requestNotifyPermission() {
   } catch (e) { /* sense notificacions */ }
 }
 
-function vibrateAlarm() {
+export function vibrateAlarm() {
   if (!('vibrate' in navigator)) return
   const until = Date.now() + 6000
   const id = setInterval(() => {
@@ -58,7 +58,7 @@ function vibrateAlarm() {
   }, 1000)
 }
 
-function notifyTimerFinish(label) {
+export function notifyTimerFinish(label) {
   try {
     if (!('Notification' in window) || Notification.permission !== 'granted') return
     closeTimerNotification('el-rebost-timer')
@@ -78,7 +78,7 @@ function notifyTimerFinish(label) {
   } catch (e) { /* sense notificacions */ }
 }
 
-function showTimerNotification(body, silent) {
+export function showTimerNotification(body, silent) {
   try {
     if (!('Notification' in window) || Notification.permission !== 'granted') return
     const options = {
@@ -97,7 +97,7 @@ function showTimerNotification(body, silent) {
   } catch (e) { /* sense notificacions */ }
 }
 
-function closeTimerNotification(tag) {
+export function closeTimerNotification(tag) {
   try {
     if (!navigator.serviceWorker || !navigator.serviceWorker.ready) return
     navigator.serviceWorker.ready.then((reg) =>
